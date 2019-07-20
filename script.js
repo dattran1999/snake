@@ -6,8 +6,8 @@ function drawCanvas (ctx) {
     // Experimental: TODO: change canvas width and height to be the same as window's
     // ctx.canvas.width = window.innerWidth;
     // ctx.canvas.height = window.innerHeight;
-    ctx.canvas.width = 400;
-    ctx.canvas.height = 300;
+    ctx.canvas.width = 200;
+    ctx.canvas.height = 200;
     // console.log("width: ", window.innerWidth, "height: ", window.innerHeight);
     ctx.fillStyle = 'black';
     ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
@@ -35,7 +35,51 @@ function drawBorder (ctx) {
         ctx.fillRect(i+1, ctx.canvas.height-9, 8, 8);
     }
 }
-
+class Searcher {
+    constructor() {
+        this.snake = new Snake(canvasContext.canvas.width, canvasContext.canvas.height);
+    }
+    computeDistance(moves, foodPosition) {
+        let distance = [];
+        moves.forEach(move => {
+            /* if moves have the same x or y coordinate as food, and snake is moving away from food, 
+             * min dist is still moving away */
+            distance.push(Math.abs(foodPosition[0] - move[0]) + Math.abs(foodPosition[1] - move[1]));
+            
+        });
+        // return the index of minimum distance
+        return distance.indexOf(Math.min(...distance));
+    }
+    search() {
+        this.snake.updatePosition();
+        this.snake.collisionDetect();
+        this.snake.loseCondition();
+        // find possible moves
+        let moves = 
+                    [ 
+                        [this.snake.headX + 10, this.snake.headY], 
+                        [this.snake.headX - 10, this.snake.headY], 
+                        [this.snake.headX, this.snake.headY + 10], 
+                        [this.snake.headX, this.snake.headY - 10]
+                    ];
+        // TODO: remove the illegal move (i.e. move to its body) --> filter the array
+        moves = moves.filter((move) => {
+            let illegal = false;
+            this.snake.body.forEach(element => {
+                if (element[0] === move[0] && element[1] === move[1]) {
+                    illegal = true;
+                }
+            });
+            if (!illegal) return move;
+        });
+        console.log("possible moves:" ,moves);
+        
+        // find food position
+        const minIndex = this.computeDistance(moves, this.snake.food.postition);
+        console.log(moves[minIndex]);
+        this.snake.updateMovementDirection(moves[minIndex][0] - this.snake.headX, moves[minIndex][1] - this.snake.headY);
+    }
+}
 
 class Snake {
     constructor (x, y){
@@ -118,27 +162,28 @@ class Food {
 }
 window.onload = function() {
     drawCanvas(canvasContext);
-    const snake = new Snake(canvasContext.canvas.width, canvasContext.canvas.height);
-    
+    // const snake = new Snake(canvasContext.canvas.width, canvasContext.canvas.height);
+    const searcher = new Searcher();
     const framesPerSecond = 10;
     setInterval(function() {
-        snake.updatePosition();
-        snake.collisionDetect();
-        snake.loseCondition();
+        // snake.updatePosition();
+        // snake.collisionDetect();
+        // snake.loseCondition();
+        searcher.search();
     }, 1000/framesPerSecond);
     document.addEventListener('keydown', function(event) {
         switch (event.code) {
             case 'ArrowRight':
-                snake.updateMovementDirection(10, 0);
+                searcher.snake.updateMovementDirection(10, 0);
                 break;
             case 'ArrowLeft':
-                snake.updateMovementDirection(-10, 0);
+                searcher.snake.updateMovementDirection(-10, 0);
                 break;
             case 'ArrowUp':
-                snake.updateMovementDirection(0, -10);
+                searcher.snake.updateMovementDirection(0, -10);
                 break;
             case 'ArrowDown':
-                snake.updateMovementDirection(0, 10);
+                searcher.snake.updateMovementDirection(0, 10);
                 break;
         }
     });
