@@ -19,6 +19,10 @@
                 overflow: hidden; /*  Disable scrollbars */
                 display: block;  /* No floating content on sides */
             }
+            #score {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+                font-size: 20px;
+            }
         </style>
     </head>
     <body>
@@ -26,6 +30,7 @@
             <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="#">upgrade your browser</a> to improve your experience.</p>
         <![endif]-->
         <canvas id="gameCanvas" style='position:absolute; left:0px; top:0px;'></canvas>
+        <h2 id="score">Score: 0</h2>
         <script src="script.js"></script>
     </body>
 </html>

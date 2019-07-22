@@ -1,6 +1,7 @@
 // global var
 const canvas = document.getElementById("gameCanvas");
 const canvasContext = canvas.getContext("2d");
+let score = 0;
 
 function drawCanvas (ctx) {
     // Experimental: TODO: change canvas width and height to be the same as window's
@@ -37,7 +38,30 @@ function drawBorder (ctx) {
 }
 class Searcher {
     constructor() {
-        this.snake = new Snake(canvasContext.canvas.width, canvasContext.canvas.height);
+        this.snake = new Snake(canvasContext.canvas.width, canvasContext.canvas.height);      
+    }
+    findLegalMoves(startX, startY) {
+        let moves = 
+                    [ 
+                        [startX + 10, startY], 
+                        [startX - 10, startY], 
+                        [startX, startY + 10], 
+                        [startX, startY - 10]
+                    ];
+        moves = moves.filter((move) => {
+            let illegal = false;
+            if (move[0] >= canvas.width || move[0] <= 0
+                || move[1] >= canvas.height || move[1] <= 0) {
+                illegal = true;
+            }
+            this.snake.body.forEach(element => {
+                if (element[0] === move[0] && element[1] === move[1]) {
+                    illegal = true;
+                }
+            });
+            if (!illegal) return move;
+        });
+        return moves;
     }
     computeDistance(moves, foodPosition) {
         let distance = [];
@@ -47,36 +71,123 @@ class Searcher {
             distance.push(Math.abs(foodPosition[0] - move[0]) + Math.abs(foodPosition[1] - move[1]));
             
         });
-        // return the index of minimum distance
-        return distance.indexOf(Math.min(...distance));
+        return distance;
     }
+}
+
+class Hamilton extends Searcher {
+    // search for way to reach the food by building a hamilton cycle
+    search() {
+        // find a path which has length snake body length + 1
+        // path search is implemented by DFS
+        // TODO: implement as an object and free it after each call
+        let stack = [];
+        this.seen = new Array(canvas.width/10).fill(false).map(() => new Array(canvas.height/10).fill(false));
+        let seen = this.seen;
+        // console.log(seen);
+        console.log("start from: ", this.snake.headX, this.snake.headY);
+        console.log("food at: ", this.snake.food.postition)
+        // add some moves to the stack first
+        let moves = this.findLegalMoves(this.snake.headX, this.snake.headY);
+        let distance = this.computeDistance(moves, this.snake.food.postition);
+        
+        for (let i = 0; i < distance.length; i++) {
+            // find max index
+            let maxIndex = distance.indexOf(Math.max(...distance));
+            // push on stack (expand last)
+            stack.push(moves[maxIndex]);
+            distance[maxIndex] = -1;
+        }
+        let pathLength = 1;
+        const snakeLength = this.snake.body.length;
+        let path = [];
+        // TODO: find the length of the path
+        while (stack.length > 0) {
+            // console.log("stack: ", stack);
+            // expand the stack
+            const currMove = stack.pop();
+            path.push(currMove);
+            pathLength++;
+            // console.log(currMove, this.snake.food.postition);
+            
+            // check if we've reach the food
+            if (currMove[0] === this.snake.food.postition[0] && currMove[1] === this.snake.food.postition[1]) {
+                console.log("reached food");
+                
+                if (pathLength > snakeLength) {
+                    console.log(`road to food: ${pathLength}, was less than snake length ${snakeLength}`);
+                    break;
+                } else {
+                    // dont expand on node that go pass the food and less than length of snake
+                    pathLength--;
+                    path.pop();
+                    continue;
+                }
+            }
+            let moves = this.findLegalMoves(currMove[0], currMove[1]);
+            if (moves === null) {
+                pathLength--;
+                path.pop();
+                continue;
+            }
+            let distance = this.computeDistance(moves, this.snake.food.postition);
+
+            let addedMove = false;
+            for (let i = 0; i < distance.length; i++) {
+                // find max index
+                let maxIndex = distance.indexOf(Math.max(...distance));
+                // if current move is not seen                
+                if (!seen[Number(moves[maxIndex][0]/10)][Number(moves[maxIndex][1]/10)]) {
+                    // push on stack
+                    stack.push(moves[maxIndex]);
+                    seen[Number(moves[maxIndex][0]/10)][Number(moves[maxIndex][1]/10)] = true;
+                    addedMove = true;
+                    // console.log("pushing moves: ", moves[maxIndex]);
+                }
+                distance[maxIndex] = -1;    
+            }
+            // node was dead end
+            if (!addedMove) {
+                pathLength--;
+                path.pop();
+            }
+
+        }
+        this.drawSnake(path);
+        stack = null;
+        delete this.seen;
+    }
+    drawSnake(path) {
+        console.log("path to food: ", path);
+        for (let i = 0; i < path.length; i++) {
+            // console.log(`${path[i][0]} - ${path[i-1][0]} = ${path[i][0] - path[i-1][0]}, ${path[i][1]} - ${path[i-1][1]} = ${path[i][1] - path[i-1][1]}`);
+            // console.log(`${path[i][0]} - ${this.snake.headX} = ${path[i][0] - this.snake.headX}, ${path[i][1]} - ${this.snake.headY} = ${path[i][1] - this.snake.headY}`);
+            this.snake.updateMovementDirection(path[i][0] - this.snake.headX, path[i][1] - this.snake.headY);
+            this.snake.updatePosition();
+        }
+    }
+}
+
+class DFS extends Searcher {
+    // expand the path via DFS by choosing the lowest cost
     search() {
         this.snake.updatePosition();
-        this.snake.collisionDetect();
         this.snake.loseCondition();
         // find possible moves
-        let moves = 
-                    [ 
-                        [this.snake.headX + 10, this.snake.headY], 
-                        [this.snake.headX - 10, this.snake.headY], 
-                        [this.snake.headX, this.snake.headY + 10], 
-                        [this.snake.headX, this.snake.headY - 10]
-                    ];
-        // TODO: remove the illegal move (i.e. move to its body) --> filter the array
-        moves = moves.filter((move) => {
-            let illegal = false;
-            this.snake.body.forEach(element => {
-                if (element[0] === move[0] && element[1] === move[1]) {
-                    illegal = true;
-                }
-            });
-            if (!illegal) return move;
-        });
-        console.log("possible moves:" ,moves);
-        
-        // find food position
-        const minIndex = this.computeDistance(moves, this.snake.food.postition);
-        console.log(moves[minIndex]);
+        const moves = this.findLegalMoves(this.snake.headX, this.snake.headY);
+        const distance = this.computeDistance(moves, this.snake.food.postition);
+        // find min distance
+        const minDist = Math.min(...distance);
+        let minIndex = distance.indexOf(minDist);
+        // check if the move will move away from the food when it's level with the food
+        if (moves[minIndex][0] === this.snake.food.postition[0] || moves[minIndex][1] === this.snake.food.postition[1]) {
+            console.log(moves[minIndex], this.snake.food.postition);
+            const currDist = Math.abs(this.snake.food.postition[0] - this.snake.headX) + Math.abs(this.snake.food.postition[1] - this.snake.headY);
+            if (minDist > currDist) {
+                minIndex++;
+            }
+        }
+        // choose move with closest distance
         this.snake.updateMovementDirection(moves[minIndex][0] - this.snake.headX, moves[minIndex][1] - this.snake.headY);
     }
 }
@@ -89,7 +200,6 @@ class Snake {
         this.headY = Math.floor(y/2);
         this.body = [[this.headX, this.headY - 10], [this.headX, this.headY]];
         this.food = new Food();
-        console.log(this.food.postition);
     }
     drawSnake(deleteBlock) {
         canvasContext.fillStyle = 'white';
@@ -102,8 +212,11 @@ class Snake {
     updatePosition () {
         this.headY += this.dy;
         this.headX += this.dx;
+        // console.log("new head: ", this.headX, this.headY);
+        
         let deleteBlock = undefined;
         if (this.headX === this.food.postition[0] && this.headY === this.food.postition[1]) {
+            score++;
             deleteBlock = null;
             this.food = new Food();
         } else {
@@ -120,6 +233,7 @@ class Snake {
     }
     reset() {
         drawCanvas(canvasContext);
+        score = 0;
         this.dx = 0;
         this.dy = 10;
         this.headX = Math.floor(canvasContext.canvas.width/2);
@@ -128,14 +242,14 @@ class Snake {
         this.food = new Food();
     }
     loseCondition() {
+        // go out of bound 
         if (this.headX >= canvasContext.canvas.width - 10 || this.headX <= 0) {
             this.reset();
         }
         if (this.headY >= canvasContext.canvas.height - 10|| this.headY <= 0) {
             this.reset();
         }
-    }
-    collisionDetect() {
+        // hit itself
         for (let i = 0; i < this.body.length - 1; i++) {
             if (this.body[i][0] === this.headX && this.body[i][1] === this.headY) {
                 this.reset();
@@ -162,15 +276,19 @@ class Food {
 }
 window.onload = function() {
     drawCanvas(canvasContext);
+    const scoreBoard = document.getElementById("score");
+    scoreBoard.style.marginTop = canvas.height + 'px';
     // const snake = new Snake(canvasContext.canvas.width, canvasContext.canvas.height);
-    const searcher = new Searcher();
-    const framesPerSecond = 10;
+    const searcher = new Hamilton();
+    const fps = 1;
     setInterval(function() {
         // snake.updatePosition();
-        // snake.collisionDetect();
         // snake.loseCondition();
+        console.log("new search");
+        
         searcher.search();
-    }, 1000/framesPerSecond);
+        scoreBoard.textContent = `Score: ${score}`;
+    }, 1000/fps);
     document.addEventListener('keydown', function(event) {
         switch (event.code) {
             case 'ArrowRight':
@@ -187,7 +305,6 @@ window.onload = function() {
                 break;
         }
     });
-
 
     // redraw canvas if window is resized
     window.addEventListener('resize', () => {drawCanvas(canvasContext)});
