@@ -86,7 +86,9 @@ class Hamilton extends Searcher {
         let seen = this.seen;
         // console.log(seen);
         console.log("start from: ", this.snake.headX, this.snake.headY);
-        console.log("food at: ", this.snake.food.postition)
+        console.log("food at: ", this.snake.food.postition);
+        console.log("body: ", this.snake.body);
+        
         // add some moves to the stack first
         let moves = this.findLegalMoves(this.snake.headX, this.snake.headY);
         let distance = this.computeDistance(moves, this.snake.food.postition);
@@ -98,21 +100,21 @@ class Hamilton extends Searcher {
             stack.push(moves[maxIndex]);
             distance[maxIndex] = -1;
         }
-        let pathLength = 1;
+        let pathLength = 0;
         const snakeLength = this.snake.body.length;
         let path = [];
         // TODO: find the length of the path
         while (stack.length > 0) {
-            // console.log("stack: ", stack);
             // expand the stack
             const currMove = stack.pop();
+            // potentially on the path
             path.push(currMove);
             pathLength++;
             // console.log(currMove, this.snake.food.postition);
             
             // check if we've reach the food
             if (currMove[0] === this.snake.food.postition[0] && currMove[1] === this.snake.food.postition[1]) {
-                console.log("reached food");
+                console.log(`reached food, length: ${pathLength}`);
                 
                 if (pathLength > snakeLength) {
                     console.log(`road to food: ${pathLength}, was less than snake length ${snakeLength}`);
@@ -121,6 +123,7 @@ class Hamilton extends Searcher {
                     // dont expand on node that go pass the food and less than length of snake
                     pathLength--;
                     path.pop();
+                    seen[Number(currMove[0]/10)][Number(currMove[1]/10)] = false;
                     continue;
                 }
             }
@@ -142,9 +145,9 @@ class Hamilton extends Searcher {
                     stack.push(moves[maxIndex]);
                     seen[Number(moves[maxIndex][0]/10)][Number(moves[maxIndex][1]/10)] = true;
                     addedMove = true;
-                    // console.log("pushing moves: ", moves[maxIndex]);
+                    console.log("pushing moves: ", moves[maxIndex]);
                 }
-                distance[maxIndex] = -1;    
+                distance[maxIndex] = -1;
             }
             // node was dead end
             if (!addedMove) {
@@ -280,7 +283,7 @@ window.onload = function() {
     scoreBoard.style.marginTop = canvas.height + 'px';
     // const snake = new Snake(canvasContext.canvas.width, canvasContext.canvas.height);
     const searcher = new Hamilton();
-    const fps = 1;
+    const fps = 50;
     setInterval(function() {
         // snake.updatePosition();
         // snake.loseCondition();
