@@ -84,6 +84,8 @@ class Hamilton extends Searcher {
         let stack = [];
         this.seen = new Array(canvas.width/10).fill(false).map(() => new Array(canvas.height/10).fill(false));
         let seen = this.seen;
+        // predecessor array
+        let predecessor = new Array(canvas.width/10).fill(null).map(() => new Array(canvas.height/10).fill(null));
         // console.log(seen);
         console.log("start from: ", this.snake.headX, this.snake.headY);
         console.log("food at: ", this.snake.food.postition);
@@ -98,44 +100,65 @@ class Hamilton extends Searcher {
             let maxIndex = distance.indexOf(Math.max(...distance));
             // push on stack (expand last)
             stack.push(moves[maxIndex]);
+            console.log("pushing moves: ", moves[maxIndex]);
+            const currMoveX = moves[maxIndex][0]/10;
+            const currMoveY = moves[maxIndex][1]/10;
+            predecessor[currMoveX][currMoveY] = [this.snake.headX, this.snake.headY];
             distance[maxIndex] = -1;
         }
-        let pathLength = 0;
+        // we reset seen array when we start again from lowest depth
+        const numNodesLevel0 = stack.length;
+        // let pathLength = 0;
         const snakeLength = this.snake.body.length;
         let path = [];
+        // let path = [];
         // TODO: find the length of the path
         while (stack.length > 0) {
             // expand the stack
             const currMove = stack.pop();
+            if (stack.length <= numNodesLevel0 - 1) {
+                seen = new Array(canvas.width/10).fill(false).map(() => new Array(canvas.height/10).fill(false));
+            }
             // potentially on the path
-            path.push(currMove);
-            pathLength++;
+            // path.push(currMove);
+            // pathLength++;
             // console.log(currMove, this.snake.food.postition);
-            
+            const currX = Number(currMove[0]/10);
+            const currY = Number(currMove[1]/10);
             // check if we've reach the food
             if (currMove[0] === this.snake.food.postition[0] && currMove[1] === this.snake.food.postition[1]) {
-                console.log(`reached food, length: ${pathLength}`);
-                
-                if (pathLength > snakeLength) {
-                    console.log(`road to food: ${pathLength}, was less than snake length ${snakeLength}`);
+                // path is from currMove and trace all the way back to start node
+                path = [];
+                let currMovePointer = currMove;
+                while (Number(currMovePointer[0]) !== this.snake.headX && Number(currMovePointer[1]) !== this.snake.headY) {
+                    path.unshift(currMovePointer);
+                    const currPointerX = Number(currMovePointer[0]/10);
+                    const currPointerY = Number(currMovePointer[1]/10);
+                    console.log(currMovePointer, "->", predecessor[currPointerX][currPointerY], "compare with", this.snake.headX, this.snake.headY);
+                    currMovePointer = predecessor[currPointerX][currPointerY];
+                }
+                console.log("exit loop with: ", currMovePointer);
+                path.unshift(currMovePointer);
+                console.log(`reached food, length: ${path.length}`);
+                if (path.length > snakeLength) {
+                    console.log(`road to food: ${path.length}, was less than snake length ${snakeLength}`);
                     break;
                 } else {
                     // dont expand on node that go pass the food and less than length of snake
-                    pathLength--;
-                    path.pop();
-                    seen[Number(currMove[0]/10)][Number(currMove[1]/10)] = false;
+                    // pathLength--;
+                    // path.pop();
+                    seen[currX][currY] = false;
                     continue;
                 }
             }
             let moves = this.findLegalMoves(currMove[0], currMove[1]);
             if (moves === null) {
-                pathLength--;
-                path.pop();
+                // pathLength--;
+                // path.pop();
                 continue;
             }
             let distance = this.computeDistance(moves, this.snake.food.postition);
 
-            let addedMove = false;
             for (let i = 0; i < distance.length; i++) {
                 // find max index
                 let maxIndex = distance.indexOf(Math.max(...distance));
@@ -143,18 +166,15 @@ class Hamilton extends Searcher {
                 if (!seen[Number(moves[maxIndex][0]/10)][Number(moves[maxIndex][1]/10)]) {
                     // push on stack
                     stack.push(moves[maxIndex]);
-                    seen[Number(moves[maxIndex][0]/10)][Number(moves[maxIndex][1]/10)] = true;
-                    addedMove = true;
+                    // to store in array, divide the coordinates by 10
+                    const moveX = Number(moves[maxIndex][0]/10);
+                    const moveY = Number(moves[maxIndex][1]/10); 
+                    seen[moveX][moveY] = true;
+                    predecessor[moveX][moveY] = currMove;
                     console.log("pushing moves: ", moves[maxIndex]);
                 }
                 distance[maxIndex] = -1;
             }
-            // node was dead end
-            if (!addedMove) {
-                pathLength--;
-                path.pop();
-            }
-
         }
         this.drawSnake(path);
         stack = null;
