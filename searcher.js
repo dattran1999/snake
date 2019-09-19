@@ -5,6 +5,7 @@ class Searcher {
     constructor() {
         this.snake = new Snake(canvasContext.canvas.width, canvasContext.canvas.height);      
     }
+    // find legal moves in the current position
     findLegalMoves(startX, startY) {
         let moves = 
                     [ 
@@ -29,15 +30,13 @@ class Searcher {
         });
         return moves;
     }
+    // compute distances to food for every possible moves
     computeDistance(moves, foodPosition) {
-        let distance = [];
-        moves.forEach(move => {
+        return moves.map(move => 
             /* if moves have the same x or y coordinate as food, and snake is moving away from food, 
              * min dist is still moving away */
-            distance.push(Math.abs(foodPosition[0] - move[0]) + Math.abs(foodPosition[1] - move[1]));
-            
-        });
-        return distance;
+            (Math.abs(foodPosition[0] - move[0]) + Math.abs(foodPosition[1] - move[1]))
+        );
     }
 }
 
@@ -62,13 +61,14 @@ class Hamilton extends Searcher {
         // add some moves to the stack first
         let moves = this.findLegalMoves(this.snake.headX, this.snake.headY);
         let distance = this.computeDistance(moves, this.snake.food.postition);
-        
+        console.log(distance)
         for (let i = 0; i < distance.length; i++) {
             // find max index
             let maxIndex = distance.indexOf(Math.max(...distance));
             // push on stack (expand last)
             stack.push(moves[maxIndex]);
             // console.log("pushing moves: ", moves[maxIndex]);
+            console.log(maxIndex)
             const currMoveX = moves[maxIndex][0]/10;
             const currMoveY = moves[maxIndex][1]/10;
             seen[currMoveX][currMoveY] = true;
@@ -164,6 +164,7 @@ class Hamilton extends Searcher {
             this.searcher();
         }
         const move = this.path.shift();
+        // couldnt find any posible move 
         if (move === null || move === undefined) {
             this.snake.reset();
         }
