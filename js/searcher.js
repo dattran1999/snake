@@ -42,6 +42,10 @@ class Searcher {
     getSnakeLength() {
         return this.snake.body.length;
     }
+
+    reset() {
+        this.snake.reset();
+    }
 }
 
 class Hamilton extends Searcher {
@@ -164,7 +168,6 @@ class Hamilton extends Searcher {
     }
     search() {
         if (this.path.length === 0) {
-            console.log("new search");
             this.searcher();
         }
         const move = this.path.shift();

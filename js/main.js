@@ -1,40 +1,18 @@
 import { DFS, Hamilton } from './searcher.js'
-import { drawCanvas, canvas, canvasContext } from './utils.js'
-
-let score = 0;
+import { drawCanvas, canvasContext } from './utils.js'
+import Game from './game.js'
 
 window.onload = function() {
-    drawCanvas(canvasContext);
-    startGame();
-    document.addEventListener('keydown', function(event) {
-        switch (event.code) {
-            case 'ArrowRight':
-                searcher.snake.updateMovementDirection(10, 0);
-                break;
-            case 'ArrowLeft':
-                searcher.snake.updateMovementDirection(-10, 0);
-                break;
-            case 'ArrowUp':
-                searcher.snake.updateMovementDirection(0, -10);
-                break;
-            case 'ArrowDown':
-                searcher.snake.updateMovementDirection(0, 10);
-                break;
-        }
+    let game = new Game(new DFS());
+    // user chooses another search style
+    const hamiltonButton = document.getElementById('hamilton-button');
+    const dfsButton = document.getElementById('dfs-button');
+    hamiltonButton.addEventListener('click', () => {
+        game.endGame();
+        game = new Game(new Hamilton());
     });
-
-    // redraw canvas if window is resized
-    window.addEventListener('resize', () => {drawCanvas(canvasContext)});
-
-}
-
-function startGame() {
-    const scoreBoard = document.getElementById("score");
-    scoreBoard.style.marginTop = canvas.height + 'px';
-    const searcher = new DFS();
-    const fps = 25;
-    setInterval(function() {
-        searcher.search();
-        scoreBoard.textContent = `Score: ${searcher.getSnakeLength()}`;
-    }, 1000/fps);
+    dfsButton.addEventListener('click', () => {
+        game.endGame();
+        game = new Game(new DFS());
+    });
 }

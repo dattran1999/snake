@@ -1,5 +1,7 @@
 // global var
 const canvas = document.getElementById("gameCanvas");
+canvas.setAttribute("width", 200);
+canvas.setAttribute("height", 200);
 const canvasContext = canvas.getContext("2d");
 
 function drawCanvas (ctx) {
