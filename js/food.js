@@ -14,6 +14,6 @@ export default class Food {
     }
     drawFood() {
         canvasContext.fillStyle = "red";
-        canvasContext.fillRect(this.postition[0], this.postition[1], 8, 8)
+        canvasContext.fillRect(this.postition[0], this.postition[1], 8, 8);
     }
 }

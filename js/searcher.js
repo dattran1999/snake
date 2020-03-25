@@ -40,7 +40,7 @@ class Searcher {
     }
 
     getSnakeLength() {
-        return this.snake.length;
+        return this.snake.body.length;
     }
 }
 

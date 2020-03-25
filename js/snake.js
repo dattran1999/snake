@@ -29,7 +29,7 @@ export default class Snake {
         if (this.headX === this.food.postition[0] && this.headY === this.food.postition[1]) {
             score++;
             deleteBlock = null;
-            while (!_validFoodPosition()) 
+            while (!this._validFoodPosition()) 
                 this.food = new Food();
         } else {
             deleteBlock = this.body.shift(); 
@@ -73,8 +73,11 @@ export default class Snake {
 
     _validFoodPosition() {
         for (let i = 0; i < this.body.length; i++) {
-            if (this.food.postition[0] === this.body[i][0] && this.food.postition[1] === this.body[i][1])
+            if (this.food.postition[0] === this.body[i][0] && this.food.postition[1] === this.body[i][1]) {
+                canvasContext.fillStyle = "white";
+                canvasContext.fillRect(this.food.postition[0], this.food.postition[1], 8, 8)
                 return false;
+            }
         }
         return true;
     }

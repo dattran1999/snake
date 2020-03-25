@@ -31,7 +31,7 @@ window.onload = function() {
 function startGame() {
     const scoreBoard = document.getElementById("score");
     scoreBoard.style.marginTop = canvas.height + 'px';
-    const searcher = new Hamilton();
+    const searcher = new DFS();
     const fps = 25;
     setInterval(function() {
         searcher.search();
