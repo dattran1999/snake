@@ -25,14 +25,15 @@ export default class Snake {
         // console.log("new head: ", this.headX, this.headY);
         
         let deleteBlock = undefined;
+        this.body.push([this.headX, this.headY]);
         if (this.headX === this.food.postition[0] && this.headY === this.food.postition[1]) {
             score++;
             deleteBlock = null;
-            this.food = new Food();
+            while (!_validFoodPosition()) 
+                this.food = new Food();
         } else {
             deleteBlock = this.body.shift(); 
         }
-        this.body.push([this.headX, this.headY]);
         this.drawSnake(deleteBlock);
     }
     updateMovementDirection (dx, dy) {
@@ -68,5 +69,13 @@ export default class Snake {
                 this.reset();
             }
         }
+    }
+
+    _validFoodPosition() {
+        for (let i = 0; i < this.body.length; i++) {
+            if (this.food.postition[0] === this.body[i][0] && this.food.postition[1] === this.body[i][1])
+                return false;
+        }
+        return true;
     }
 }

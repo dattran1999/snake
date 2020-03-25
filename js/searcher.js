@@ -38,6 +38,10 @@ class Searcher {
             (Math.abs(foodPosition[0] - move[0]) + Math.abs(foodPosition[1] - move[1]))
         );
     }
+
+    getSnakeLength() {
+        return this.snake.length;
+    }
 }
 
 class Hamilton extends Searcher {

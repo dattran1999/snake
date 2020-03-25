@@ -5,19 +5,7 @@ let score = 0;
 
 window.onload = function() {
     drawCanvas(canvasContext);
-    const scoreBoard = document.getElementById("score");
-    scoreBoard.style.marginTop = canvas.height + 'px';
-    // const snake = new Snake(canvasContext.canvas.width, canvasContext.canvas.height);
-    const searcher = new Hamilton();
-    const fps = 25;
-    // TODO: add promise instead of this???
-    setInterval(function() {
-        // snake.updatePosition();
-        // snake.loseCondition();
-        searcher.search();
-        score = searcher.snake.body.length;
-        scoreBoard.textContent = `Score: ${score}`;
-    }, 1000/fps);
+    startGame();
     document.addEventListener('keydown', function(event) {
         switch (event.code) {
             case 'ArrowRight':
@@ -38,4 +26,15 @@ window.onload = function() {
     // redraw canvas if window is resized
     window.addEventListener('resize', () => {drawCanvas(canvasContext)});
 
+}
+
+function startGame() {
+    const scoreBoard = document.getElementById("score");
+    scoreBoard.style.marginTop = canvas.height + 'px';
+    const searcher = new Hamilton();
+    const fps = 25;
+    setInterval(function() {
+        searcher.search();
+        scoreBoard.textContent = `Score: ${searcher.getSnakeLength()}`;
+    }, 1000/fps);
 }
